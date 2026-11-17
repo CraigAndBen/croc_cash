@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Croc Cash</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        box-sizing: border-box;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        --bg: #e4ecd8;
+        --panel: #f6f9ee;
+        --ink: #16301f;
+        --muted: #55705c;
+        --accent: #c98a0b;
+        --water: #2f6f6a;
+        --water2: #2a655f;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #0f1f1b;
+          --panel: #17302a;
+          --ink: #e8f2dc;
+          --muted: #8fb09a;
+          --accent: #f0b429;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #0f1f1b;
+        --panel: #17302a;
+        --ink: #e8f2dc;
+        --muted: #8fb09a;
+        --accent: #f0b429;
+      }
+      html {
+        scroll-padding-top: env(safe-area-inset-top, 0px);
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: inherit;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Nunito", system-ui, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        padding: 16px;
+        touch-action: none;
+      }
+      h1 {
+        font-family: "Bungee", Impact, sans-serif;
+        font-weight: 400;
+        font-size: clamp(28px, 6vw, 44px);
+        margin: 0;
+        letter-spacing: 0.02em;
+      }
+      .bar {
+        display: flex;
+        gap: 12px;
+        width: min(92vw, 520px);
+        justify-content: space-between;
+      }
+      .stat {
+        background: var(--panel);
+        border-radius: 12px;
+        padding: 8px 14px;
+        font-weight: 800;
+        flex: 1;
+        text-align: center;
+      }
+      .stat small {
+        display: block;
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 12px;
+      }
+      .stat b {
+        font-family: "Bungee", Impact, sans-serif;
+        font-weight: 400;
+        font-size: 22px;
+        color: var(--accent);
+      }
+      .wrap {
+        position: relative;
+        width: min(92vw, 520px);
+        aspect-ratio: 1;
+      }
+      canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+        border-radius: 14px;
+        border: 4px solid var(--ink);
+      }
+      .overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: rgba(10, 30, 26, 0.82);
+        border-radius: 14px;
+        color: #f1f7e6;
+        text-align: center;
+        padding: 20px;
+      }
+      .overlay h2 {
+        font-family: "Bungee", Impact, sans-serif;
+        font-weight: 400;
+        margin: 0;
+        font-size: clamp(24px, 6vw, 36px);
+      }
+      .overlay p {
+        margin: 0;
+        max-width: 30ch;
+        color: #bcd3c0;
+      }
+      button {
+        font-family: "Bungee", Impact, sans-serif;
+        font-size: 18px;
+        padding: 10px 22px;
+        border: 0;
+        border-radius: 999px;
+        background: #f0b429;
+        color: #2a1c00;
+        cursor: pointer;
+      }
+      button:focus-visible {
+        outline: 3px solid #fff;
+        outline-offset: 3px;
+      }
+      .hint {
+        color: var(--muted);
+        font-size: 14px;
+        margin: 0;
+      }
+      .ctl {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+        align-items: center;
+        width: min(92vw, 520px);
+      }
+      button.sm {
+        font-family: "Nunito", system-ui, sans-serif;
+        font-weight: 800;
+        font-size: 14px;
+        padding: 6px 14px;
+        background: var(--panel);
+        color: var(--ink);
+        border: 2px solid var(--ink);
+      }
+      .trk {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .hidden {
+        display: none;
+      }
+      #ovImg svg {
+        width: min(44vw, 190px);
+        height: auto;
+        display: block;
+      }
+      .drip {
+        animation: drip 1.4s ease-in infinite;
+      }
+      .drip.b {
+        animation-delay: 0.7s;
+      }
+      @keyframes drip {
+        0% {
+          transform: translateY(-6px);
+          opacity: 0;
+        }
+        30% {
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(18px);
+          opacity: 0;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .drip {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Croc Cash</h1>
+    <div class="bar">
+      <div class="stat"><small>Cash eaten</small><b id="score">$0</b></div>
+      <div class="stat"><small>Best</small><b id="best">$0</b></div>
+    </div>
+    <div class="wrap">
+      <canvas
+        id="c"
+        width="520"
+        height="520"
+        aria-label="Crocodile game board"
+      ></canvas>
+      <div class="overlay" id="ov">
+        <div id="ovImg" class="hidden">
+          <svg
+            viewBox="0 0 200 180"
+            role="img"
+            aria-label="A crying crocodile in a barong shirt holding one lonely bill"
+          >
+            <path
+              d="M34 180C36 140 62 122 100 122C138 122 164 140 166 180Z"
+              fill="#f3ead2"
+            />
+            <path
+              d="M100 124V180M82 124L100 146L118 124"
+              fill="none"
+              stroke="#cdbf9a"
+              stroke-width="3"
+            />
+            <ellipse cx="100" cy="70" rx="56" ry="46" fill="#4aa046" />
+            <rect x="60" y="76" width="80" height="46" rx="22" fill="#5cba56" />
+            <circle cx="88" cy="86" r="3" fill="#1d4a1c" />
+            <circle cx="112" cy="86" r="3" fill="#1d4a1c" />
+            <circle cx="70" cy="44" r="17" fill="#4aa046" />
+            <circle cx="130" cy="44" r="17" fill="#4aa046" />
+            <circle cx="70" cy="46" r="12" fill="#ffe66b" />
+            <circle cx="130" cy="46" r="12" fill="#ffe66b" />
+            <circle cx="71" cy="50" r="5" fill="#111" />
+            <circle cx="129" cy="50" r="5" fill="#111" />
+            <path
+              d="M54 38L84 26M116 26L146 38"
+              stroke="#1d4a1c"
+              stroke-width="4"
+              stroke-linecap="round"
+            />
+            <path
+              d="M68 58C58 76 56 94 62 108M132 58C142 76 144 94 138 108"
+              fill="none"
+              stroke="#6ec6ff"
+              stroke-width="5"
+              stroke-linecap="round"
+            />
+            <path
+              d="M76 114Q100 98 124 114"
+              fill="none"
+              stroke="#1d4a1c"
+              stroke-width="3"
+              stroke-linecap="round"
+            />
+            <path d="M84 107l3 6 4-8zM109 105l4 8 3-6z" fill="#fff" />
+            <path
+              class="drip"
+              d="M62 112c-5 7-5 11 0 11s5-4 0-11z"
+              fill="#6ec6ff"
+            />
+            <path
+              class="drip b"
+              d="M138 112c-5 7-5 11 0 11s5-4 0-11z"
+              fill="#6ec6ff"
+            />
+            <g transform="rotate(-12 150 152)">
+              <rect
+                x="130"
+                y="142"
+                width="40"
+                height="20"
+                rx="2"
+                fill="#7bc47f"
+                stroke="#2d7a3a"
+                stroke-width="2"
+              />
+              <text
+                x="150"
+                y="157"
+                text-anchor="middle"
+                font-size="13"
+                font-weight="700"
+                fill="#2d7a3a"
+                font-family="sans-serif"
+              >
+                $
+              </text>
+            </g>
+            <g transform="rotate(24 172 30)">
+              <rect
+                x="154"
+                y="20"
+                width="36"
+                height="18"
+                rx="2"
+                fill="#7bc47f"
+                stroke="#2d7a3a"
+                stroke-width="2"
+              />
+              <text
+                x="172"
+                y="34"
+                text-anchor="middle"
+                font-size="12"
+                font-weight="700"
+                fill="#2d7a3a"
+                font-family="sans-serif"
+              >
+                $
+              </text>
+            </g>
+            <path
+              d="M150 14h-14M154 24h-18M148 34h-12"
+              stroke="#bcd3c0"
+              stroke-width="2"
+              stroke-linecap="round"
+              opacity=".7"
+            />
+          </svg>
+        </div>
+        <h2 id="ovT">Feed the croc</h2>
+        <p id="ovP">Eat the money. Don’t bite the walls or your own tail.</p>
+        <button id="go">Start</button>
+      </div>
+    </div>
+    <div class="ctl">
+      <button class="sm" id="mute">Sound: on</button>
+    </div>
+    <p class="hint">
+      Arrow keys or WASD to steer · Space to pause · swipe on phones
+    </p>
+
+    <script>
+      (function () {
+        var N = 20,
+          S = 26,
+          cv = document.getElementById("c"),
+          ctx = cv.getContext("2d");
+        var scoreEl = document.getElementById("score"),
+          bestEl = document.getElementById("best");
+        var ov = document.getElementById("ov"),
+          ovT = document.getElementById("ovT"),
+          ovP = document.getElementById("ovP"),
+          goBtn = document.getElementById("go");
+        var croc,
+          dir,
+          queue,
+          money,
+          score,
+          best = 0,
+          timer,
+          state = "idle",
+          tick;
+
+        /* ================== SOUND SETTINGS ==================
+     Put your own audio here. Use a file path (e.g. 'sounds/eat.mp3'),
+     a full URL, or a data: URI. Leave '' to use the built-in generated sound.
+       music : loops while you play
+       eat   : eating a green bill
+       gold  : eating a gold coin (falls back to 'eat' if empty)
+       over  : game over
+     ===================================================== */
+        var SOUND_FILES = {
+          music: "sounds/dreamrunning_trim-1-edited.mp3",
+          eat: "sounds/cash-register-sound-fx.mp3",
+          gold: "sounds/paldo-nanaman.mp3",
+          over: "sounds/metal-gear-solid-solid-snake-scream.mp3",
+        };
+        var MUSIC_FADE = 1.5; // seconds of crossfade at the loop point (raise it for a softer blend, 0 = hard loop)
+        var MUSIC_VOLUME = 0.5; // 0 to 1
+
+        /* ---------- Audio ---------- */
+        var Snd = (function () {
+          var ac = null,
+            master,
+            sfxG,
+            musG,
+            muted = false,
+            mTimer = null,
+            beatN = 0,
+            custom = null,
+            fx = {};
+          var bass = [110, 0, 110, 131, 0, 110, 147, 98],
+            lead = [0, 440, 0, 0, 523, 0, 392, 0];
+          ["eat", "gold", "over"].forEach(function (k) {
+            if (!SOUND_FILES[k]) return;
+            fx[k] = new Audio(SOUND_FILES[k]);
+            fx[k].preload = "auto";
+            fx[k].onerror = function () {
+              delete fx[k];
+            };
+          });
+          if (SOUND_FILES.music)
+            custom = makeLoop(SOUND_FILES.music, function () {
+              custom = null;
+            });
+          /* Seamless music loop: two copies of the track overlap, so the end fades out
+       while the start fades in. Avoids the silent gap of the browser's loop=true. */
+          function makeLoop(src, onFail) {
+            var a = [new Audio(src), new Audio(src)],
+              cur = 0,
+              iv = null;
+            a.forEach(function (el) {
+              el.preload = "auto";
+              el.volume = 0;
+              el.onerror = onFail;
+            });
+            function frame() {
+              a.forEach(function (el, i) {
+                if (el.paused) return;
+                var d = el.duration;
+                if (!d || !isFinite(d)) return;
+                var t = el.currentTime,
+                  f = Math.max(0.05, Math.min(MUSIC_FADE, d / 2)),
+                  left = d - t;
+                var g =
+                  MUSIC_FADE > 0
+                    ? Math.min(1, t / f) * Math.min(1, left / f)
+                    : 1;
+                el.volume = Math.max(0, Math.min(1, MUSIC_VOLUME * g));
+                if (i === cur && left <= f + 0.02 && a[1 - i].paused) {
+                  var o = a[1 - i];
+                  o.currentTime = 0;
+                  var q = o.play();
+                  if (q && q.catch) q.catch(function () {});
+                  cur = 1 - i;
+                }
+                if (MUSIC_FADE <= 0 && el.ended) {
+                  el.currentTime = 0;
+                  el.play();
+                }
+              });
+            }
+            function play(el) {
+              var p = el.play();
+              if (p && p.catch) p.catch(function () {});
+            }
+            return {
+              start: function (restart) {
+                if (restart) {
+                  a.forEach(function (el) {
+                    el.pause();
+                    el.currentTime = 0;
+                    el._on = false;
+                  });
+                  cur = 0;
+                  a[0]._on = true;
+                  a[0].volume = MUSIC_FADE > 0 ? 0 : MUSIC_VOLUME;
+                } else if (!a[0]._on && !a[1]._on) a[cur]._on = true;
+                a.forEach(function (el) {
+                  if (el._on) play(el);
+                });
+                clearInterval(iv);
+                iv = setInterval(frame, 40);
+              },
+              stop: function () {
+                clearInterval(iv);
+                a.forEach(function (el) {
+                  el._on = !el.paused;
+                  el.pause();
+                });
+              },
+              mute: function (m) {
+                a.forEach(function (el) {
+                  el.muted = m;
+                });
+              },
+            };
+          }
+          function playFx(k) {
+            var a = fx[k];
+            if (!a) return false;
+            a.currentTime = 0;
+            var p = a.play();
+            if (p && p.catch) p.catch(function () {});
+            return true;
+          }
+          function init() {
+            if (ac) return;
+            var C = window.AudioContext || window.webkitAudioContext;
+            if (!C) return;
+            ac = new C();
+            master = ac.createGain();
+            master.gain.value = muted ? 0 : 1;
+            master.connect(ac.destination);
+            sfxG = ac.createGain();
+            sfxG.gain.value = 0.5;
+            sfxG.connect(master);
+            musG = ac.createGain();
+            musG.gain.value = 0.22;
+            musG.connect(master);
+          }
+          function tone(f, t0, d, type, g, dest, slide) {
+            var o = ac.createOscillator(),
+              e = ac.createGain();
+            o.type = type;
+            o.frequency.setValueAtTime(f, t0);
+            if (slide) o.frequency.exponentialRampToValueAtTime(slide, t0 + d);
+            e.gain.setValueAtTime(0.0001, t0);
+            e.gain.exponentialRampToValueAtTime(g, t0 + 0.01);
+            e.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
+            o.connect(e);
+            e.connect(dest);
+            o.start(t0);
+            o.stop(t0 + d + 0.02);
+          }
+          function beat() {
+            var t = ac.currentTime + 0.02,
+              i = beatN++ % 8;
+            if (bass[i]) tone(bass[i], t, 0.28, "triangle", 0.5, musG);
+            if (lead[i]) tone(lead[i], t, 0.18, "square", 0.12, musG);
+          }
+          return {
+            resume: function () {
+              init();
+              if (ac && ac.state === "suspended") ac.resume();
+            },
+            eat: function (gold) {
+              if (playFx(gold && fx.gold ? "gold" : "eat")) return;
+              if (!ac) return;
+              var t = ac.currentTime;
+              if (gold) {
+                [660, 830, 990, 1320].forEach(function (f, i) {
+                  tone(f, t + i * 0.07, 0.14, "triangle", 0.6, sfxG);
+                });
+              } else {
+                tone(260, t, 0.12, "square", 0.5, sfxG, 120);
+                tone(660, t + 0.05, 0.1, "sine", 0.5, sfxG);
+                tone(990, t + 0.11, 0.14, "sine", 0.5, sfxG);
+              }
+            },
+            over: function () {
+              if (playFx("over")) return;
+              if (!ac) return;
+              var t = ac.currentTime;
+              [330, 262, 208, 165].forEach(function (f, i) {
+                tone(f, t + i * 0.18, 0.22, "sawtooth", 0.4, sfxG, f * 0.8);
+              });
+              tone(80, t + 0.7, 0.5, "sine", 0.8, sfxG, 40);
+            },
+            musicOn: function (restart) {
+              if (custom) {
+                custom.start(restart);
+                return;
+              }
+              if (!ac || mTimer) return;
+              beatN = 0;
+              mTimer = setInterval(beat, 230);
+            },
+            musicOff: function () {
+              if (custom) custom.stop();
+              if (mTimer) {
+                clearInterval(mTimer);
+                mTimer = null;
+              }
+            },
+            toggleMute: function () {
+              muted = !muted;
+              if (master) master.gain.value = muted ? 0 : 1;
+              if (custom) custom.mute(muted);
+              Object.keys(fx).forEach(function (k) {
+                fx[k].muted = muted;
+              });
+              return muted;
+            },
+          };
+        })();
+
+        var muteB = document.getElementById("mute");
+        muteB.onclick = function () {
+          Snd.resume();
+          muteB.textContent = "Sound: " + (Snd.toggleMute() ? "off" : "on");
+          muteB.blur();
+        };
+
+        try {
+          best = parseInt(localStorage.getItem("croc-best"), 10) || 0;
+        } catch (e) {}
+        bestEl.textContent = "$" + best;
+
+        function reset() {
+          croc = [
+            { x: 6, y: 10 },
+            { x: 5, y: 10 },
+            { x: 4, y: 10 },
+            { x: 3, y: 10 },
+          ];
+          dir = { x: 1, y: 0 };
+          queue = [];
+          score = 0;
+          tick = 150;
+          scoreEl.textContent = "$0";
+          placeMoney();
+        }
+        function placeMoney() {
+          var ok = false;
+          while (!ok) {
+            money = {
+              x: Math.floor(Math.random() * N),
+              y: Math.floor(Math.random() * N),
+              gold: Math.random() < 0.15,
+            };
+            ok = !croc.some(function (s) {
+              return s.x === money.x && s.y === money.y;
+            });
+          }
+        }
+        function start() {
+          reset();
+          state = "play";
+          ov.classList.add("hidden");
+          Snd.resume();
+          Snd.musicOff();
+          Snd.musicOn(true);
+          clearInterval(timer);
+          timer = setInterval(step, tick);
+        }
+        function setSpeed() {
+          clearInterval(timer);
+          timer = setInterval(step, tick);
+        }
+
+        function step() {
+          if (queue.length) dir = queue.shift();
+          var h = { x: croc[0].x + dir.x, y: croc[0].y + dir.y };
+          if (
+            h.x < 0 ||
+            h.y < 0 ||
+            h.x >= N ||
+            h.y >= N ||
+            croc.some(function (s) {
+              return s.x === h.x && s.y === h.y;
+            })
+          )
+            return over();
+          croc.unshift(h);
+          if (h.x === money.x && h.y === money.y) {
+            score += money.gold ? 50 : 10;
+            Snd.eat(money.gold);
+            scoreEl.textContent = "$" + score;
+            if (!money.gold && tick > 70) {
+              tick -= 3;
+              setSpeed();
+            }
+            placeMoney();
+          } else croc.pop();
+          draw();
+        }
+        function over() {
+          clearInterval(timer);
+          state = "over";
+          Snd.musicOff();
+          Snd.over();
+          if (score > best) {
+            best = score;
+            bestEl.textContent = "$" + best;
+            try {
+              localStorage.setItem("croc-best", best);
+            } catch (e) {}
+          }
+          draw();
+          ovT.textContent = "Chomp! Game over";
+          document.getElementById("ovImg").classList.remove("hidden");
+          ovP.textContent =
+            "Out of funds! The croc cried over $" +
+            score +
+            ". " +
+            (score >= best && score > 0
+              ? "New best!"
+              : "Try for a fatter belly.");
+          goBtn.textContent = "Play again";
+          ov.classList.remove("hidden");
+        }
+        function pause() {
+          if (state === "play") {
+            state = "pause";
+            clearInterval(timer);
+            Snd.musicOff();
+            ovT.textContent = "Paused";
+            document.getElementById("ovImg").classList.add("hidden");
+            ovP.textContent = "The croc is sunbathing.";
+            goBtn.textContent = "Resume";
+            ov.classList.remove("hidden");
+          } else if (state === "pause") {
+            state = "play";
+            ov.classList.add("hidden");
+            setSpeed();
+            Snd.resume();
+            Snd.musicOn();
+          }
+        }
+        goBtn.onclick = function () {
+          state === "pause" ? pause() : start();
+        };
+
+        function turn(dx, dy) {
+          if (state !== "play") return;
+          var last = queue.length ? queue[queue.length - 1] : dir;
+          if (
+            (last.x === -dx && last.y === -dy) ||
+            (last.x === dx && last.y === dy)
+          )
+            return;
+          if (queue.length < 2) queue.push({ x: dx, y: dy });
+        }
+        var keys = {
+          ArrowUp: [0, -1],
+          w: [0, -1],
+          ArrowDown: [0, 1],
+          s: [0, 1],
+          ArrowLeft: [-1, 0],
+          a: [-1, 0],
+          ArrowRight: [1, 0],
+          d: [1, 0],
+        };
+        addEventListener("keydown", function (e) {
+          var k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+          if (keys[k]) {
+            e.preventDefault();
+            turn(keys[k][0], keys[k][1]);
+          } else if (e.key === " ") {
+            e.preventDefault();
+            if (state === "play" || state === "pause") pause();
+            else if (document.activeElement !== goBtn) start();
+          }
+        });
+        var tx, ty;
+        cv.addEventListener(
+          "touchstart",
+          function (e) {
+            tx = e.touches[0].clientX;
+            ty = e.touches[0].clientY;
+          },
+          { passive: true },
+        );
+        cv.addEventListener(
+          "touchend",
+          function (e) {
+            var dx = e.changedTouches[0].clientX - tx,
+              dy = e.changedTouches[0].clientY - ty;
+            if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return;
+            if (Math.abs(dx) > Math.abs(dy)) turn(dx > 0 ? 1 : -1, 0);
+            else turn(0, dy > 0 ? 1 : -1);
+          },
+          { passive: true },
+        );
+
+        function draw() {
+          for (var y = 0; y < N; y++)
+            for (var x = 0; x < N; x++) {
+              ctx.fillStyle = (x + y) % 2 ? "#2f6f6a" : "#2a655f";
+              ctx.fillRect(x * S, y * S, S, S);
+            }
+          drawMoney();
+          drawCroc();
+        }
+        function drawMoney() {
+          var px = money.x * S,
+            py = money.y * S;
+          if (money.gold) {
+            ctx.fillStyle = "#f0b429";
+            ctx.beginPath();
+            ctx.arc(px + S / 2, py + S / 2, S * 0.4, 0, 7);
+            ctx.fill();
+            ctx.strokeStyle = "#a56d00";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle = "#7a4f00";
+            ctx.font = "bold 16px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("$", px + S / 2, py + S / 2 + 1);
+          } else {
+            ctx.fillStyle = "#7bc47f";
+            ctx.fillRect(px + 2, py + 6, S - 4, S - 12);
+            ctx.strokeStyle = "#2d7a3a";
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(px + 2.5, py + 6.5, S - 5, S - 13);
+            ctx.fillStyle = "#2d7a3a";
+            ctx.font = "bold 12px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("$", px + S / 2, py + S / 2 + 0.5);
+          }
+        }
+        function drawCroc() {
+          var n = croc.length;
+          for (var i = n - 1; i >= 0; i--) {
+            var s = croc[i],
+              t = 1 - (i / n) * 0.45,
+              size = (S - 2) * t,
+              o = (S - size) / 2;
+            ctx.fillStyle = i % 2 ? "#3f8f3c" : "#4aa046";
+            rr(s.x * S + o, s.y * S + o, size, size, 5);
+            ctx.fill();
+            if (i > 0 && i < n - 1 && i % 2 === 0) {
+              ctx.fillStyle = "#2c6b2b";
+              ctx.fillRect(s.x * S + S / 2 - 2, s.y * S + S / 2 - 2, 4, 4);
+            }
+          }
+          var h = croc[0],
+            cx = h.x * S + S / 2,
+            cy = h.y * S + S / 2,
+            d = dir;
+          ctx.fillStyle = "#55b350";
+          rr(h.x * S + 1, h.y * S + 1, S - 2, S - 2, 7);
+          ctx.fill();
+          var px = -d.y,
+            py = d.x; // perpendicular
+          // snout nostrils
+          ctx.fillStyle = "#1d4a1c";
+          [-1, 1].forEach(function (k) {
+            ctx.beginPath();
+            ctx.arc(
+              cx + d.x * 9 + px * k * 4,
+              cy + d.y * 9 + py * k * 4,
+              1.8,
+              0,
+              7,
+            );
+            ctx.fill();
+          });
+          // eyes
+          [-1, 1].forEach(function (k) {
+            var ex = cx + d.x * 2 + px * k * 8,
+              ey = cy + d.y * 2 + py * k * 8;
+            ctx.fillStyle = "#ffe66b";
+            ctx.beginPath();
+            ctx.arc(ex, ey, 4, 0, 7);
+            ctx.fill();
+            ctx.fillStyle = "#111";
+            ctx.beginPath();
+            ctx.arc(ex + d.x * 1.5, ey + d.y * 1.5, 1.8, 0, 7);
+            ctx.fill();
+          });
+          // teeth
+          ctx.fillStyle = "#fff";
+          [-1, 1].forEach(function (k) {
+            ctx.beginPath();
+            ctx.arc(
+              cx + d.x * 12 + px * k * 6,
+              cy + d.y * 12 + py * k * 6,
+              1.4,
+              0,
+              7,
+            );
+            ctx.fill();
+          });
+        }
+        function rr(x, y, w, h, r) {
+          ctx.beginPath();
+          ctx.moveTo(x + r, y);
+          ctx.arcTo(x + w, y, x + w, y + h, r);
+          ctx.arcTo(x + w, y + h, x, y + h, r);
+          ctx.arcTo(x, y + h, x, y, r);
+          ctx.arcTo(x, y, x + w, y, r);
+          ctx.closePath();
+        }
+
+        reset();
+        draw();
+      })();
+    </script>
+  </body>
+</html>
